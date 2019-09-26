@@ -1,5 +1,5 @@
 """
-This file contains a DBInterface class which dictates table creation, deletion, and access.
+This file contains a Database class which dictates table creation, deletion, and access.
 """
 
 import os
@@ -11,11 +11,11 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.ext.automap import automap_base
 
 # Local Imports
-from datatotable import manipulator
+from datatotable import data
 
 
-class DBInterface:
-    """DBInterface provides table creation and deletion, table access, and database information.
+class Database:
+    """Database provides table creation and deletion, table access, and database information.
 
     Attributes:
          location: The path to the database
@@ -46,7 +46,7 @@ class DBInterface:
             self.location = os.path.realpath(os.path.join(directory, name))
         else:
             self.location = r"sqlite:///{}.db".format(name)
-        self.engine = create_engine(self.location, pool_pre_ping=True)
+        self.engine = create_engine(self.location)
         self.metadata = MetaData(self.engine)
         self.Base = declarative_base()
 
@@ -81,7 +81,7 @@ class DBInterface:
             return False
 
     def create_tables(self):
-        """Creates all tables which have been made or modified with the Base class of the DBInterface
+        """Creates all tables which have been made or modified with the Base class of the Database
 
         Note that existing tables which have been modified, such as by adding a relationship, will be updated when
         create_tables() is called. """
@@ -170,43 +170,6 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor.close()
 
 
-# def database_file(calling_file_path):
-#     """Return the database file path with the path modified in relation to the path the function is called from.
-#
-#     The base path is r"sqlite:///outputs//nba_db.db". This function modifies that path in relation to the calling file
-#     path by inserting ..// to the front of the base path. So a file nested one level below the root directory becomes
-#     r"sqlite:///..//outputs//nba_db.db"
-#     """
-#     head_path = project_directory()
-#     head_folder = os.path.split(head_path)[1]
-#
-#     if os.path.realpath(calling_file_path) in head_path:
-#         # If NBApredict is imported from outside the project, replace calling_file_path with head_path
-#         #
-#         calling_file_path = head_path
-#
-#     calling_file_path = calling_file_path.replace("\\", "/")
-#     print("Calling_file_path:", calling_file_path)
-#     sub_dirs = []
-#     split_path = os.path.split(calling_file_path)
-#     path = split_path[0]
-#     folder = split_path[1]
-#     while folder != head_folder:
-#         sub_dirs.append(folder)
-#         split_path = os.path.split(path)
-#         path = split_path[0]
-#         folder = split_path[1]
-#
-#     if len(sub_dirs) > 0:
-#         modified_path = calling_file_path
-#         for folder in sub_dirs:
-#             modified_path = rreplace(modified_path, folder, "..", 1)
-#
-#         path_addin = modified_path.split(head_folder)[1]
-#         path_addin = path_addin.replace("/", "//")
-#         while path_addin[0] == "/":
-#             path_addin = path_addin[1:]
-#         db_path = r"sqlite:///{}//outputs//nba_db.db".format(path_addin)
-#         return db_path
-#     else:
-#         return r"sqlite:///outputs//nba_db.db"
+if __name__ == "__main__":
+    db = Database("test")
+    t=2

@@ -61,8 +61,8 @@ def get_type(values):
     Returns:
         The modal type of a list or the type of the element. Can be integer, float, string, datetime, or none
 
-    To-Do:
-        Modal type isn't a full proof method. Need to determine a better method.
+    ToDo:
+        Modal type isn't a full proof method. Need to determine/implement better methods.
     """
     if hasattr(values, "__len__") and (type(values) != type):  # Checks if the object is iterable
         val_types = []
