@@ -5,20 +5,20 @@ This file contains a DBInterface class which dictates table creation, deletion, 
 import os
 from sqlalchemy import Column, Integer, Table
 from sqlalchemy import create_engine, MetaData, event
-from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import mapper, clear_mappers
+from sqlalchemy.engine import Engine
 from sqlalchemy.ext.automap import automap_base
 
 # Local Imports
-from nbapredict.configuration import Config
+from datatotable import manipulator
 
 
 class DBInterface:
-    """DBInterface contains high level information about the desired database and creation, deletion, and access functions
+    """DBInterface provides table creation and deletion, table access, and database information.
 
     Attributes:
-         path: The path to the database
+         location: The path to the database
          engine: SQLalchemy engine for accessing the database
          metadata: Metadata for the engine, used mostly for table access / reflection
          Base: SQLalchemy declarative_base() used for table creation
@@ -32,55 +32,50 @@ class DBInterface:
         """
         pass
 
-    def __init__(self, url=None):
+    def __init__(self, name, directory=None):
         """Initialize macro-level SQLalchemy objects as class attributes (engine, metadata, base).
 
-        A session will allow interaction with the DB."""
-        if not url:
-            file_path = os.getcwd()
-            self.path = Config.get_property("database")
+        A session will allow interaction with the DB.
+
+        Args:
+            directory: The directory where the database is stored or will be created
+            name: The name of the database
+        """
+        if directory:
+            # ToDo: This clause will not work
+            self.location = os.path.realpath(os.path.join(directory, name))
         else:
-            self.path = url
-        self.engine = create_engine(self.path, pool_pre_ping=True)
+            self.location = r"sqlite:///{}.db".format(name)
+        self.engine = create_engine(self.location, pool_pre_ping=True)
         self.metadata = MetaData(self.engine)
         self.Base = declarative_base()
 
-    def get_tables(self, table_names=False):
-        """Find and return the specified tables or return all tables.
-
-        Primary use is to check if table exists in database. Use get_table_mappings() for ORM style table interactions
-        """
+    @property
+    def tables(self):
+        """Return a dictionary of tables from the database"""
         meta = MetaData(bind=self.engine)
         meta.reflect(bind=self.engine)
-        if table_names:
-            return meta.tables[table_names]
-        else:
-            return meta.tables
+        return meta.tables
 
-    def get_table_mappings(self, table_names):
-        """Find and return the specified table mappings or return all table mappings
-
-        Args:
-         table_names: The table names for which mappings are desired. Either a string or list
-        """
-        if isinstance(table_names, str):  # Allows a string, rather than list, to be passed to function
-            holder = table_names
-            table_names = [holder]
-
-        self.metadata.reflect(self.engine, only=table_names)
+    @property
+    def table_mappings(self):
+        """Find and return the specified table mappings or return all table mappings"""
+        self.metadata.reflect(self.engine)
         Base = automap_base(metadata=self.metadata)
         Base.prepare()
 
-        mapped_tables = [Base.classes[name] for name in table_names]
-        if len(mapped_tables) == 1:
-            return mapped_tables[0]
-        else:
-            return mapped_tables
+        return Base.classes
+
+        # ToDo: Used if not a property DELETE
+        # mapped_tables = [Base.classes[name] for name in table_names]
+        # if len(mapped_tables) == 1:
+        #    return mapped_tables[0]
+        # else:
+        #    return mapped_tables
 
     def table_exists(self, tbl_name):
         """Check if a table exists in the database; Return True if it exists and False otherwise."""
-        self.metadata.reflect(bind=self.engine)
-        if tbl_name in self.metadata.tables:
+        if tbl_name in self.tables:
             return True
         else:
             return False
@@ -134,26 +129,30 @@ class DBInterface:
     def clear_mappers():
         clear_mappers()
 
-    def insert_row(self, table, row):
-        """Insert a single row into the specified table in the engine"""
-        conn = self.engine.connect()
-        table = self.get_tables(table)
-        conn.execute(table.insert(), row)
-        conn.close()
-        # Rows formatted as
-        #   [{'l_name': 'Jones', 'f_name': 'bob'},
-        #   {'l_name': 'Welker', 'f_name': 'alice'}])
-
-    def insert_rows(self, table, rows):
-        """Insert rows into the specified table.
-
-        Uses sqlalchemy's "Classic" method. ORM database interactions are mediated by sessions.
-        """
-        table = self.get_tables(table)
-        conn = self.engine.connect()
-        for row in rows:
-            conn.execute(table.insert(), row)
-        conn.close()
+    # def insert_row(self, table, row):
+    #     """Insert a single row into the specified table in the engine
+    #
+    #     ToDo: No row access in DBinterface"""
+    #     conn = self.engine.connect()
+    #     table = self.get_tables(table)
+    #     conn.execute(table.insert(), row)
+    #     conn.close()
+    #     # Rows formatted as
+    #     #   [{'l_name': 'Jones', 'f_name': 'bob'},
+    #     #   {'l_name': 'Welker', 'f_name': 'alice'}])
+    #
+    # def insert_rows(self, table, rows):
+    #     """Insert rows into the specified table.
+    #
+    #     Uses sqlalchemy's "Classic" method. ORM database interactions are mediated by sessions.
+    #
+    #     ToDo: No row access in DBinterface
+    #     """
+    #     table = self.get_tables(table)
+    #     conn = self.engine.connect()
+    #     for row in rows:
+    #         conn.execute(table.insert(), row)
+    #     conn.close()
 
     def drop_table(self, drop_tbl):
         """Drops the specified table from the database"""
@@ -169,3 +168,45 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA foreign_keys=ON")
     cursor.close()
+
+
+# def database_file(calling_file_path):
+#     """Return the database file path with the path modified in relation to the path the function is called from.
+#
+#     The base path is r"sqlite:///outputs//nba_db.db". This function modifies that path in relation to the calling file
+#     path by inserting ..// to the front of the base path. So a file nested one level below the root directory becomes
+#     r"sqlite:///..//outputs//nba_db.db"
+#     """
+#     head_path = project_directory()
+#     head_folder = os.path.split(head_path)[1]
+#
+#     if os.path.realpath(calling_file_path) in head_path:
+#         # If NBApredict is imported from outside the project, replace calling_file_path with head_path
+#         #
+#         calling_file_path = head_path
+#
+#     calling_file_path = calling_file_path.replace("\\", "/")
+#     print("Calling_file_path:", calling_file_path)
+#     sub_dirs = []
+#     split_path = os.path.split(calling_file_path)
+#     path = split_path[0]
+#     folder = split_path[1]
+#     while folder != head_folder:
+#         sub_dirs.append(folder)
+#         split_path = os.path.split(path)
+#         path = split_path[0]
+#         folder = split_path[1]
+#
+#     if len(sub_dirs) > 0:
+#         modified_path = calling_file_path
+#         for folder in sub_dirs:
+#             modified_path = rreplace(modified_path, folder, "..", 1)
+#
+#         path_addin = modified_path.split(head_folder)[1]
+#         path_addin = path_addin.replace("/", "//")
+#         while path_addin[0] == "/":
+#             path_addin = path_addin[1:]
+#         db_path = r"sqlite:///{}//outputs//nba_db.db".format(path_addin)
+#         return db_path
+#     else:
+#         return r"sqlite:///outputs//nba_db.db"

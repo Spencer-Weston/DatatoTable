@@ -2,7 +2,6 @@
 manipulator holds the DataManipulator class which coerces raw_data into SQLalchemy compatible formats.
 """
 from datetime import datetime
-from nbapredict.helpers import type
 from sqlalchemy import Integer, Float, String, DateTime, Boolean
 
 
@@ -63,7 +62,7 @@ class DataManipulator:
         Raises:
             An exception if a py_type is not an integer, float, string, datetime, bool, or none
 
-        To-do:
+        Todo:
             * Change the logic into a switch statement
         """
 
