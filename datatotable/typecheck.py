@@ -19,8 +19,9 @@ def set_type(values):
         The input list of values modified to match their type. String is the default return value. If the values are
         ints or floats, returns the list formatted as a list of ints or floats. Empty values will be replaced with none.
 
-    To-Do:
-        1. Add functionality to coerce elements of lists and not just lists
+    ToDo:
+        1. Add functionality to coerce elements of lists and not just lists (I no longer know what this means)
+        2. Modify to use get_type rather than the current system
     """
     test_val = values[0]  # Is there a better method than taking a test val?
     if is_int(test_val):
