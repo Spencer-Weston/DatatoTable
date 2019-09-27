@@ -5,6 +5,10 @@ from datetime import datetime
 from sqlalchemy import Integer, Float, String, DateTime, Boolean
 from datatotable import typecheck
 
+# ToDo: Remove imports below here; Used for testing
+from datetime import datetime, timedelta
+
+
 class DataOperator:
     """DataOperator takes scraped data in init, and uses its member functions to return manipulations of that data"""
 
@@ -81,6 +85,7 @@ class DataOperator:
                 sql_types[key] = Boolean
             elif py_type is None:
                 continue  # We continue here so as to not create a column for null values
+                # ToDo: evaluate if this clause should exist. Why was it here in the first place?
             else:
                 raise Exception("Error: py_type {} is not an integer, float, datetime,"
                                 " none, or string".format(py_types[key]))
@@ -144,3 +149,20 @@ class DataOperator:
             return True
         else:
             return False
+
+
+if __name__ == "__main__":
+    test_data1 = {"strings": ["hi", "world", "bye", "school"], "ints": [1, 2, 3, 4],
+                  "floats": [1.1, 2.2, 3.3, 4.4444], "dates": [datetime(2019, 1, 1)+timedelta(i) for i in range(4)]}
+
+    test_data2 = {"int_float": [1, 2, 1.1, 2.2], "int_float_none": [None, 1, 2, 3.3],
+                  "datetime_none": [datetime(2019, 1, 1), None, datetime(2018, 1, 1), None],
+                  "datetime_string": [datetime(2019, 1, 1), 'here', 'we', 'go'],
+                  "int_float_string": [1, 1.1, "1.1", "2.2cm"],
+                  "int_float_string_datetime": [1, 1.1, "1.1cm", datetime(2019, 1, 1)]}
+
+    # test1 = DataOperator(test_data1)
+    # columns1 = test1.columns
+    test2 = DataOperator(test_data2)
+    columns2 = test2.columns
+    t=2

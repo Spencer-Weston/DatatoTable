@@ -60,15 +60,25 @@ def get_type(values):
 
     Returns:
         The modal type of a list or the type of the element. Can be integer, float, string, datetime, or none
-
-    ToDo:
-        Modal type isn't a full proof method. Need to determine/implement better methods.
     """
     if hasattr(values, "__len__") and (type(values) != type):  # Checks if the object is iterable
         val_types = []
         for i in values:
             val_types.append(_get_type(i))
-        return max(set(val_types), key=val_types.count)  # The max, set, and key combo returns the modal type
+        type_set = set(val_types)
+        if len(type_set) == 1:
+            return type_set.pop()
+        elif len(type_set) == 2 and {None}.issubset(type_set):  # None value allowance
+            return type_set.difference({None}).pop()
+        elif len(type_set) <= 3 and {int, float}.issubset(type_set):
+            diff = type_set.difference({int, float})
+            if not bool(diff) or diff == {None}:
+                return float
+            else:
+                return str
+        else:  # All other possible combinations of value must default to string
+            return 'string'
+
     elif isinstance(values, Enum):  # For enum objects, pass the value to the get_type function (right choice? IDK)
         return _get_type(values.value)
     else:
@@ -86,15 +96,15 @@ def _get_type(val):
         Exception: An exception raised if the val is not int, float, datetime, or string.
     """
     if isinstance(val, int):
-        return "integer"
+        return int
     elif isinstance(val, float):
-        return "float"
+        return float
     elif isinstance(val, datetime):
-        return "datetime"
+        return datetime
     elif isinstance(val, str):
-        return "string"
+        return str
     elif isinstance(val, bool):
-        return "bool"
+        return bool
     elif val is None:
         return None
     elif is_python_type(val):  # Handles types that are passed explicitly
