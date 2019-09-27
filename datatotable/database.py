@@ -18,7 +18,8 @@ class Database:
     """Database provides table creation and deletion, table access, and database information.
 
     Attributes:
-         location: The path to the database
+         location: The location of the database in relation to the working directory with the database prefix (e.g. SQLite:///)
+         path: The absolute path to the database
          engine: SQLalchemy engine for accessing the database
          metadata: Metadata for the engine, used mostly for table access / reflection
          Base: SQLalchemy declarative_base() used for table creation
@@ -46,6 +47,8 @@ class Database:
             self.location = os.path.realpath(os.path.join(directory, name))
         else:
             self.location = r"sqlite:///{}.db".format(name)
+        # ToDo: Reformat self.path. Will need to follow from the directory just as location does
+        self.path = os.path.join(os.getcwd(), "{}.db".format(name))
         self.engine = create_engine(self.location)
         self.metadata = MetaData(self.engine)
         self.Base = declarative_base()

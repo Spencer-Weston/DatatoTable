@@ -13,25 +13,33 @@ def database():
 
 
 @pytest.fixture
-def sample_data_operator():
+def sample_data1():
     test_data = {"strings": ["hi", "world", "bye", "school"], "ints": [1, 2, 3, 4],
                  "floats": [1.1, 2.2, 3.3, 4.4444], "dates": [datetime(2019, 1, 1)+timedelta(i) for i in range(4)]}
-    return DataOperator(test_data)
+    return test_data
+
+
+class TestTypeCheck:
+
+    def test_get_type(self, sample_data1):
+        assert True
 
 
 class TestDataOperator:
 
-    def test_column_generator(self, sample_data_operator):
+    def test_column_generator(self, sample_data1):
         """Assert that columns reflect the expected SQLalchemy column type"""
-        columns = sample_data_operator.columns
+        data = DataOperator(sample_data1)
+        columns = data.columns
         assert columns['strings'] == String, "Incorrect SQLalchemy type returned by DataOperator.columns"
         assert columns['ints'] == Integer, "Incorrect SQLalchemy type returned by DataOperator.columns"
         assert columns['floats'] == Float, "Incorrect SQLalchemy type returned by DataOperator.columns"
         assert columns['dates'] == DateTime, "Incorrect SQLalchemy type returned by DataOperator.columns"
 
-    def test_row_generator(self, sample_data_operator):
+    def test_row_generator(self, sample_data1):
         """Assert that rows are correctly formatted into a list of dictionaries"""
-        rows = sample_data_operator.rows
+        data = DataOperator(sample_data1)
+        rows = data.rows
         assert isinstance(rows, list)
         assert rows[0] == {'strings': 'hi', 'ints': 1, 'floats': 1.1, 'dates': datetime(2019, 1, 1)}
         assert rows[1] == {'strings': 'world', 'ints': 2, 'floats': 2.2, 'dates': datetime(2019, 1, 2)}
@@ -46,6 +54,6 @@ class TestDatabase:
         This test must be run after a task is executed against the database."""
         database.create_tables()  # Arbitrary blank call to the database creates a connection, and thus, the database
         database.clear_mappers()
-        assert os.path.exists(database.location), "Database does not exist"
+        assert os.path.exists(database.path), "Database does not exist"
 
 
