@@ -1,5 +1,6 @@
 from datatotable.database import Database
 from datatotable.data import DataOperator
+from datatotable import typecheck
 from datetime import datetime, timedelta
 import os
 import pandas
@@ -20,9 +21,29 @@ def sample_data1():
 
 
 class TestTypeCheck:
+    """Tests functionality in the typecheck module"""
 
     def test_get_type(self, sample_data1):
-        assert True
+        assert str == typecheck.get_type(sample_data1['strings'])
+        assert int == typecheck.get_type(sample_data1['ints'])
+        assert float == typecheck.get_type(sample_data1['floats'])
+        assert datetime == typecheck.get_type(sample_data1['dates'])
+
+    def test_set_type(self):
+        floats = [1.1, 2.2, 3.3, 4.6]
+        ints = [1, 2, 3, 5]
+        strings = ['1.1', '2.2', '3.3', '4.6']
+        assert ints == typecheck.set_type(floats, int)
+        assert strings == typecheck.set_type(floats, str)
+        assert [1.0 * x for x in ints] == typecheck.set_type(ints, float)
+        assert [str(x) for x in ints] == typecheck.set_type(ints, str)
+        assert ints == typecheck.set_type(strings, int)
+        assert floats == typecheck.set_type(strings, float)
+
+    def test_set_type_errors(self):
+        strings = ['1.1', '2.2', '3.3', '4.6']
+        with pytest.raises(ValueError):
+            typecheck.set_type(strings, datetime)
 
 
 class TestDataOperator:

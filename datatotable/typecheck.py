@@ -4,33 +4,32 @@ Contains type checks and type conversion functions
 
 from datetime import datetime
 from enum import Enum
-import os
 
 
-def set_type(values):
+def set_type(values, new_type):
     """Convert string values to integers or floats if applicable. Otherwise, return strings.
 
     If the string value has zero length, none is returned
 
     Args:
         values: A list of values
+        new_type: The type to coerce values to
 
     Returns:
         The input list of values modified to match their type. String is the default return value. If the values are
         ints or floats, returns the list formatted as a list of ints or floats. Empty values will be replaced with none.
-
-    ToDo:
-        1. Add functionality to coerce elements of lists and not just lists (I no longer know what this means)
-        2. Modify to use get_type rather than the current system
     """
-    test_val = values[0]  # Is there a better method than taking a test val?
-    if is_int(test_val):
-        return _set_type(values, int)
-    elif is_float(test_val):
-        return _set_type(values, float)
+    if new_type == str:
+        coerced_values = [str(x) for x in values]
+    elif new_type == int or new_type == float:
+        float_values = [float(x) for x in values]
+        if new_type == int:
+            coerced_values = [int(round(x)) for x in float_values]
+        else:
+            coerced_values = float_values
     else:
-        values = [x if len(x) > 0 else None for x in values]  # Set empty strings to None
-        return values
+        raise ValueError("{} not supported for coercing types".format(new_type.__name__))
+    return coerced_values
 
 
 def _set_type(values, new_type):
@@ -42,7 +41,7 @@ def _set_type(values, new_type):
 
     Returns:
         The values list modified to the new_type. If an element is empty, the element is set to None.
-        """
+    """
 
     new_vals = []
     for i in values:
@@ -78,7 +77,7 @@ def get_type(values):
             else:
                 return str
         else:  # All other possible combinations of value must default to string
-            return 'string'
+            return str
 
     elif isinstance(values, Enum):  # For enum objects, pass the value to the get_type function (right choice? IDK)
         return _get_type(values.value)
@@ -94,7 +93,7 @@ def _get_type(val):
     Returns:
         The type of the value passed into the function if it is an int, float, datetime, or string
     Raise:
-        Exception: An exception raised if the val is not int, float, datetime, or string.
+        Exception: An exception raised if the val is not int, float, datetime, None, or string.
     """
     if isinstance(val, int):
         return int
