@@ -8,26 +8,35 @@ import pytest
 from sqlalchemy import Integer, Float, String, DateTime, Boolean
 
 
-@pytest.fixture
+@pytest.fixture()
 def database():
     return Database("test")
 
 
 @pytest.fixture
-def sample_data1():
+def sample_dict_data():
     test_data = {"strings": ["hi", "world", "bye", "school"], "ints": [1, 2, 3, 4],
                  "floats": [1.1, 2.2, 3.3, 4.4444], "dates": [datetime(2019, 1, 1)+timedelta(i) for i in range(4)]}
+    return test_data
+
+
+@pytest.fixture()
+def sample_row_data():
+    test_data = [{"strings": 'hi', 'ints': 1, 'floats': 1.1, 'dates': datetime(2019, 1, 1)},
+                 {"strings": 'world', 'ints': 2, 'floats': 2.2, 'dates': datetime(2019, 1, 2)},
+                 {"strings": 'bye', 'ints': 3, 'floats': 3.3, 'dates': datetime(2019, 1, 3)},
+                 {"strings": 'school', 'ints': 4, 'floats': 4.4444, 'dates': datetime(2019, 1, 4)}]
     return test_data
 
 
 class TestTypeCheck:
     """Tests functionality in the typecheck module"""
 
-    def test_get_type(self, sample_data1):
-        assert str == typecheck.get_type(sample_data1['strings'])
-        assert int == typecheck.get_type(sample_data1['ints'])
-        assert float == typecheck.get_type(sample_data1['floats'])
-        assert datetime == typecheck.get_type(sample_data1['dates'])
+    def test_get_type(self, sample_dict_data):
+        assert str == typecheck.get_type(sample_dict_data['strings'])
+        assert int == typecheck.get_type(sample_dict_data['ints'])
+        assert float == typecheck.get_type(sample_dict_data['floats'])
+        assert datetime == typecheck.get_type(sample_dict_data['dates'])
 
     def test_set_type(self):
         floats = [1.1, 2.2, 3.3, 4.6]
@@ -48,18 +57,35 @@ class TestTypeCheck:
 
 class TestDataOperator:
 
-    def test_column_generator(self, sample_data1):
+    def test_dict_column_generator(self, sample_dict_data):
         """Assert that columns reflect the expected SQLalchemy column type"""
-        data = DataOperator(sample_data1)
+        data = DataOperator(sample_dict_data)
         columns = data.columns
         assert columns['strings'] == String, "Incorrect SQLalchemy type returned by DataOperator.columns"
         assert columns['ints'] == Integer, "Incorrect SQLalchemy type returned by DataOperator.columns"
         assert columns['floats'] == Float, "Incorrect SQLalchemy type returned by DataOperator.columns"
         assert columns['dates'] == DateTime, "Incorrect SQLalchemy type returned by DataOperator.columns"
 
-    def test_row_generator(self, sample_data1):
+    def test_dict_row_generator(self, sample_dict_data):
         """Assert that rows are correctly formatted into a list of dictionaries"""
-        data = DataOperator(sample_data1)
+        data = DataOperator(sample_dict_data)
+        rows = data.rows
+        assert isinstance(rows, list)
+        assert rows[0] == {'strings': 'hi', 'ints': 1, 'floats': 1.1, 'dates': datetime(2019, 1, 1)}
+        assert rows[1] == {'strings': 'world', 'ints': 2, 'floats': 2.2, 'dates': datetime(2019, 1, 2)}
+        assert rows[2] == {'strings': 'bye', 'ints': 3, 'floats': 3.3, 'dates': datetime(2019, 1, 3)}
+        assert rows[3] == {'strings': 'school', 'ints': 4, 'floats': 4.4444, 'dates': datetime(2019, 1, 4)}
+
+    def test_list_column_generator(self, sample_row_data):
+        data = DataOperator(sample_row_data)
+        columns = data.columns
+        assert columns['strings'] == String, "Incorrect SQLalchemy type returned by DataOperator.columns"
+        assert columns['ints'] == Integer, "Incorrect SQLalchemy type returned by DataOperator.columns"
+        assert columns['floats'] == Float, "Incorrect SQLalchemy type returned by DataOperator.columns"
+        assert columns['dates'] == DateTime, "Incorrect SQLalchemy type returned by DataOperator.columns"
+
+    def test_list_row_generator(self, sample_row_data):
+        data = DataOperator(sample_row_data)
         rows = data.rows
         assert isinstance(rows, list)
         assert rows[0] == {'strings': 'hi', 'ints': 1, 'floats': 1.1, 'dates': datetime(2019, 1, 1)}

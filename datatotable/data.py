@@ -1,12 +1,9 @@
 """
 Data holds the DataOperator class which coerces raw_data into SQLalchemy compatible formats.
 """
-from datetime import datetime
 from sqlalchemy import Integer, Float, String, DateTime, Boolean
 from datatotable import typecheck
-
-# ToDo: Remove imports below here; Used for testing
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 class DataOperator:
@@ -65,9 +62,6 @@ class DataOperator:
 
         Raises:
             An exception if a py_type is not an integer, float, string, datetime, bool, or none
-
-        Todo:
-            * Change the logic into a switch statement
         """
 
         sql_types = dict()
@@ -107,9 +101,12 @@ class DataOperator:
         if isinstance(self.data, dict):
             return self._dict_to_rows()
         elif isinstance(self.data, list):
-            return self._list_to_rows()
+            if self._list_to_rows():
+                return self.data
+            else:
+                raise ValueError("self.data is not a properly formatted list or dictionary, and cannot be handled")
         else:
-            raise Exception("tbl is neither a list or dictionary, and cannot be handled")
+            raise ValueError("self.data is not a properly formatted list or dictionary, and cannot be handled")
 
     def _dict_to_rows(self):
         """Convert and return an input dictionary into rows compatible with SQLalchemy"""
@@ -126,12 +123,14 @@ class DataOperator:
         return rows
 
     def _list_to_rows(self):
-        """Not yet functional
-
-        To-do:
-            Implement functionality for transforming lists into database rows"""
-
-        raise Exception("tbl is a list. Function to convert lists into database rows is not implemented")
+        """Checks if self.data is in row format and returns the result as a bool"""
+        keys = self.data[0].keys()
+        for i in self.data:
+            if i.keys() == keys:
+                continue
+            else:
+                return False
+        return True
 
     def validate_data_length(self):
         """Given a dictionary where keys references lists, check that all lists are the same length, and return T or F
@@ -152,6 +151,7 @@ class DataOperator:
 
 
 if __name__ == "__main__":
+    from datetime import datetime, timedelta
     test_data1 = {"strings": ["hi", "world", "bye", "school"], "ints": [1, 2, 3, 4],
                   "floats": [1.1, 2.2, 3.3, 4.4444], "dates": [datetime(2019, 1, 1)+timedelta(i) for i in range(4)]}
 
@@ -161,8 +161,16 @@ if __name__ == "__main__":
                   "int_float_string": [1, 1.1, "1.1", "2.2cm"],
                   "int_float_string_datetime": [1, 1.1, "1.1cm", datetime(2019, 1, 1)]}
 
-    # test1 = DataOperator(test_data1)
-    # columns1 = test1.columns
+    test_list_data = [{"strings": 'hi', 'ints': 1, 'floats': 1.1, 'dates': datetime(2019, 1, 1)},
+                      {"strings": 'world', 'ints': 2, 'floats': 2.2, 'dates': datetime(2019, 1, 2)},
+                      {"strings": 'bye', 'ints': 3, 'floats': 3.3, 'dates': datetime(2019, 1, 3)},
+                      {"strings": 'school', 'ints': 4, 'floats': 4.4444, 'dates': datetime(2019, 1, 4)}]
+
+    test1 = DataOperator(test_data1)
+    columns1 = test1.columns
     test2 = DataOperator(test_data2)
     columns2 = test2.columns
+    test_list = DataOperator(test_list_data)
+    columns_list = test_list.columns
+    rows_list = test_list.rows
     t=2
