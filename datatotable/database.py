@@ -2,6 +2,7 @@
 This file contains a Database class which dictates table creation, deletion, and access.
 """
 
+from pathlib import Path
 import os
 from sqlalchemy import Column, Integer, Table
 from sqlalchemy import create_engine, MetaData, event
@@ -43,12 +44,12 @@ class Database:
             name: The name of the database
         """
         if directory:
-            # ToDo: This clause will not work
-            self.location = os.path.realpath(os.path.join(directory, name))
+            prefix = r"sqlite:///"
+            self.path = Path(directory).joinpath("{}.db".format(name))
+            self.location = "{}{}".format(prefix, self.path)
         else:
             self.location = r"sqlite:///{}.db".format(name)
-        # ToDo: Reformat self.path. Will need to follow from the directory just as location does
-        self.path = os.path.join(os.getcwd(), "{}.db".format(name))
+            self.path = os.path.join(os.getcwd(), "{}.db".format(name))
         self.engine = create_engine(self.location)
         self.metadata = MetaData(self.engine)
         self.Base = declarative_base()
@@ -68,13 +69,6 @@ class Database:
         Base.prepare()
 
         return Base.classes
-
-        # ToDo: Used if not a property DELETE
-        # mapped_tables = [Base.classes[name] for name in table_names]
-        # if len(mapped_tables) == 1:
-        #    return mapped_tables[0]
-        # else:
-        #    return mapped_tables
 
     def table_exists(self, tbl_name):
         """Check if a table exists in the database; Return True if it exists and False otherwise."""
@@ -132,31 +126,6 @@ class Database:
     def clear_mappers():
         clear_mappers()
 
-    # def insert_row(self, table, row):
-    #     """Insert a single row into the specified table in the engine
-    #
-    #     ToDo: No row access in DBinterface"""
-    #     conn = self.engine.connect()
-    #     table = self.get_tables(table)
-    #     conn.execute(table.insert(), row)
-    #     conn.close()
-    #     # Rows formatted as
-    #     #   [{'l_name': 'Jones', 'f_name': 'bob'},
-    #     #   {'l_name': 'Welker', 'f_name': 'alice'}])
-    #
-    # def insert_rows(self, table, rows):
-    #     """Insert rows into the specified table.
-    #
-    #     Uses sqlalchemy's "Classic" method. ORM database interactions are mediated by sessions.
-    #
-    #     ToDo: No row access in DBinterface
-    #     """
-    #     table = self.get_tables(table)
-    #     conn = self.engine.connect()
-    #     for row in rows:
-    #         conn.execute(table.insert(), row)
-    #     conn.close()
-
     def drop_table(self, drop_tbl):
         """Drops the specified table from the database"""
         self.metadata.reflect(bind=self.engine)
@@ -174,5 +143,7 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
 
 
 if __name__ == "__main__":
-    db = Database("test")
-    t=2
+    import tempfile
+    temp_dir = tempfile.TemporaryDirectory()
+    db = Database(name="test", directory=temp_dir.name)
+    t1=2

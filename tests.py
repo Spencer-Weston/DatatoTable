@@ -9,8 +9,9 @@ from sqlalchemy import Integer, Float, String, DateTime, Boolean
 
 
 @pytest.fixture()
-def database():
-    return Database("test")
+def database(tmpdir):
+    """Generates a Database object named 'test.db' in the tmpdir"""
+    yield Database("test", tmpdir)
 
 
 @pytest.fixture
@@ -28,17 +29,21 @@ def sample_row_data():
                  {"strings": 'school', 'ints': 4, 'floats': 4.4444, 'dates': datetime(2019, 1, 4)}]
     return test_data
 
+def sample_data
+
 
 class TestTypeCheck:
     """Tests functionality in the typecheck module"""
 
     def test_get_type(self, sample_dict_data):
+        """Tests that the get_type function from typecheck correctly identifies the type from a list of data"""
         assert str == typecheck.get_type(sample_dict_data['strings'])
         assert int == typecheck.get_type(sample_dict_data['ints'])
         assert float == typecheck.get_type(sample_dict_data['floats'])
         assert datetime == typecheck.get_type(sample_dict_data['dates'])
 
     def test_set_type(self):
+        """Tests that the set_type function from typecheck correctly modifies data types"""
         floats = [1.1, 2.2, 3.3, 4.6]
         ints = [1, 2, 3, 5]
         strings = ['1.1', '2.2', '3.3', '4.6']
@@ -50,15 +55,17 @@ class TestTypeCheck:
         assert floats == typecheck.set_type(strings, float)
 
     def test_set_type_errors(self):
+        """Tests for correct error raising when data cannot be coerced to an alternate type"""
         strings = ['1.1', '2.2', '3.3', '4.6']
         with pytest.raises(ValueError):
             typecheck.set_type(strings, datetime)
 
 
 class TestDataOperator:
+    """Tests functionality in the data.DataOperator class"""
 
     def test_dict_column_generator(self, sample_dict_data):
-        """Assert that columns reflect the expected SQLalchemy column type"""
+        """Assert that columns reflect the expected SQLalchemy column type when DataOperator is passed a dictionary"""
         data = DataOperator(sample_dict_data)
         columns = data.columns
         assert columns['strings'] == String, "Incorrect SQLalchemy type returned by DataOperator.columns"
@@ -67,7 +74,7 @@ class TestDataOperator:
         assert columns['dates'] == DateTime, "Incorrect SQLalchemy type returned by DataOperator.columns"
 
     def test_dict_row_generator(self, sample_dict_data):
-        """Assert that rows are correctly formatted into a list of dictionaries"""
+        """Assert that rows are correctly formatted into a list of dictionaries when DataOperator is passed a dict"""
         data = DataOperator(sample_dict_data)
         rows = data.rows
         assert isinstance(rows, list)
@@ -77,6 +84,7 @@ class TestDataOperator:
         assert rows[3] == {'strings': 'school', 'ints': 4, 'floats': 4.4444, 'dates': datetime(2019, 1, 4)}
 
     def test_list_column_generator(self, sample_row_data):
+        """Assert that columns reflect the expected SQLalchemy column type when DataOperator is passed a list"""
         data = DataOperator(sample_row_data)
         columns = data.columns
         assert columns['strings'] == String, "Incorrect SQLalchemy type returned by DataOperator.columns"
@@ -85,6 +93,7 @@ class TestDataOperator:
         assert columns['dates'] == DateTime, "Incorrect SQLalchemy type returned by DataOperator.columns"
 
     def test_list_row_generator(self, sample_row_data):
+        """Assert that rows are correctly formatted into a list of dictionaries when DataOperator is passed a list"""
         data = DataOperator(sample_row_data)
         rows = data.rows
         assert isinstance(rows, list)
@@ -95,12 +104,13 @@ class TestDataOperator:
 
 
 class TestDatabase:
-    def test_db_exists(self, database):
-        """Tests if the database exists.
+    """"Tests functionality of the database.Database class."""
 
-        This test must be run after a task is executed against the database."""
+    def test_db_exists(self, database):
+        """Tests if the database exists."""
         database.create_tables()  # Arbitrary blank call to the database creates a connection, and thus, the database
         database.clear_mappers()
         assert os.path.exists(database.path), "Database does not exist"
 
-
+    def test_tbl_creation(self):
+        pass
