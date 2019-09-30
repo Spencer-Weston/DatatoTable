@@ -151,7 +151,7 @@ class DataOperator:
 
 
 if __name__ == "__main__":
-    from datetime import datetime, timedelta
+    from datetime import timedelta
     test_data1 = {"strings": ["hi", "world", "bye", "school"], "ints": [1, 2, 3, 4],
                   "floats": [1.1, 2.2, 3.3, 4.4444], "dates": [datetime(2019, 1, 1)+timedelta(i) for i in range(4)]}
 
