@@ -5,19 +5,15 @@ from datetime import datetime, timedelta
 import os
 import pandas
 import pytest
-from sqlalchemy import Integer, Float, String, DateTime, Boolean
-
-
-@pytest.fixture()
-def database(tmpdir):
-    """Generates a Database object named 'test.db' in the tmpdir"""
-    yield Database("test", tmpdir)
+from sqlalchemy import Integer, Float, String, DateTime, UniqueConstraint, ForeignKeyConstraint
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 
 @pytest.fixture
 def sample_dict_data():
     test_data = {"strings": ["hi", "world", "bye", "school"], "ints": [1, 2, 3, 4],
-                 "floats": [1.1, 2.2, 3.3, 4.4444], "dates": [datetime(2019, 1, 1)+timedelta(i) for i in range(4)]}
+                 "floats": [1.1, 2.2, 3.3, 4.4444], "dates": [datetime(2019, 1, 1) + timedelta(i) for i in range(4)]}
     return test_data
 
 
@@ -29,7 +25,22 @@ def sample_row_data():
                  {"strings": 'school', 'ints': 4, 'floats': 4.4444, 'dates': datetime(2019, 1, 4)}]
     return test_data
 
-def sample_data
+
+@pytest.fixture()
+def sample_data_operator(sample_dict_data):
+    data = DataOperator(sample_dict_data)
+    return data
+
+
+@pytest.fixture()
+def sample_foreign_data_operator():
+    pass
+
+
+@pytest.fixture()
+def session(database):
+    session = Session(bind=database.engine)
+    return session
 
 
 class TestTypeCheck:
@@ -106,11 +117,62 @@ class TestDataOperator:
 class TestDatabase:
     """"Tests functionality of the database.Database class."""
 
+    @pytest.fixture(autouse=True, scope="session")
+    def database(self, tmpdir_factory):
+        """Generates a Database object named 'test.db' in the tmpdir"""
+        yield Database("test", tmpdir_factory.mktemp("tempDB"))
+
     def test_db_exists(self, database):
         """Tests if the database exists."""
-        database.create_tables()  # Arbitrary blank call to the database creates a connection, and thus, the database
+        database.create_tables()  # Arbitrary blank call to the database creates a connection and the database file
         database.clear_mappers()
         assert os.path.exists(database.path), "Database does not exist"
 
-    def test_tbl_creation(self):
-        pass
+    def test_tbl_creation(self, database, sample_data_operator):
+        data = sample_data_operator
+        columns = data.columns
+        database.map_table("sample_tbl", columns)
+        database.create_tables()
+        database.clear_mappers()
+        assert database.table_exists("sample_tbl")
+
+    def test_tbl_creation_constraints(self, database, session, sample_data_operator):
+        """Tests if a unique constraint is attached to unique table by inserting duplicate data."""
+        data = sample_data_operator
+        columns = data.columns
+        assert 0
+        constraints = {UniqueConstraint: ["strings"]}
+        database.map_table("unique_tbl", columns, constraints)
+        database.create_tables()
+        assert database.table_exists('unique_tbl')
+
+        tbl_map = database.table_mappings["unique_tbl"]
+        session.add_all([tbl_map(**row) for row in data.rows])
+        session.commit()
+        non_unique_row = tbl_map(**{'strings': 'hi', 'ints': 1, 'floats': 1.1, 'dates': datetime.now()})
+        session.add(non_unique_row)
+        with pytest.raises(IntegrityError):
+            session.commit()
+
+    def test_foreign_key_constraints(self, database, session):
+        parent_data = DataOperator({})
+
+    def test_tbl_insertion(self, database, session, sample_data_operator):
+        data = sample_data_operator
+        rows = data.rows
+        tbl_map = database.table_mappings["sample_tbl"]
+        tbl_map_rows = [tbl_map(**row) for row in rows]
+        session.add_all(tbl_map_rows)
+        session.commit()
+        test_query = session.query(tbl_map).filter(tbl_map.strings == "hi").all()[0]
+        row_dict = {key: value[0] for (key, value) in data.data.items()}
+        test_dict = {key: test_query.__getattribute__(key) for key in data.data.keys()}
+        assert row_dict == test_dict
+
+    def test_drop_tbl(self, database):
+        database.drop_table(drop_tbl='sample_tbl')
+        assert not database.table_exists('sample_tbl')
+
+
+if __name__ == "__main__":
+    print('ello')
