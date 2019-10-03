@@ -79,10 +79,10 @@ class TestDataOperator:
         """Assert that columns reflect the expected SQLalchemy column type when DataOperator is passed a dictionary"""
         data = DataOperator(sample_dict_data)
         columns = data.columns
-        assert columns['strings'] == String, "Incorrect SQLalchemy type returned by DataOperator.columns"
-        assert columns['ints'] == Integer, "Incorrect SQLalchemy type returned by DataOperator.columns"
-        assert columns['floats'] == Float, "Incorrect SQLalchemy type returned by DataOperator.columns"
-        assert columns['dates'] == DateTime, "Incorrect SQLalchemy type returned by DataOperator.columns"
+        assert columns['strings'] == [String], "Incorrect SQLalchemy type returned by DataOperator.columns"
+        assert columns['ints'] == [Integer], "Incorrect SQLalchemy type returned by DataOperator.columns"
+        assert columns['floats'] == [Float], "Incorrect SQLalchemy type returned by DataOperator.columns"
+        assert columns['dates'] == [DateTime], "Incorrect SQLalchemy type returned by DataOperator.columns"
 
     def test_dict_row_generator(self, sample_dict_data):
         """Assert that rows are correctly formatted into a list of dictionaries when DataOperator is passed a dict"""
@@ -98,10 +98,10 @@ class TestDataOperator:
         """Assert that columns reflect the expected SQLalchemy column type when DataOperator is passed a list"""
         data = DataOperator(sample_row_data)
         columns = data.columns
-        assert columns['strings'] == String, "Incorrect SQLalchemy type returned by DataOperator.columns"
-        assert columns['ints'] == Integer, "Incorrect SQLalchemy type returned by DataOperator.columns"
-        assert columns['floats'] == Float, "Incorrect SQLalchemy type returned by DataOperator.columns"
-        assert columns['dates'] == DateTime, "Incorrect SQLalchemy type returned by DataOperator.columns"
+        assert columns['strings'] == [String], "Incorrect SQLalchemy type returned by DataOperator.columns"
+        assert columns['ints'] == [Integer], "Incorrect SQLalchemy type returned by DataOperator.columns"
+        assert columns['floats'] == [Float], "Incorrect SQLalchemy type returned by DataOperator.columns"
+        assert columns['dates'] == [DateTime], "Incorrect SQLalchemy type returned by DataOperator.columns"
 
     def test_list_row_generator(self, sample_row_data):
         """Assert that rows are correctly formatted into a list of dictionaries when DataOperator is passed a list"""
@@ -140,7 +140,6 @@ class TestDatabase:
         """Tests if a unique constraint is attached to unique table by inserting duplicate data."""
         data = sample_data_operator
         columns = data.columns
-        assert 0
         constraints = {UniqueConstraint: ["strings"]}
         database.map_table("unique_tbl", columns, constraints)
         database.create_tables()

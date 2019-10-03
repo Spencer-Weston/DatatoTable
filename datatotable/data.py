@@ -68,15 +68,15 @@ class DataOperator:
         for key in py_types:
             py_type = py_types[key]
             if py_type == "integer" or py_type is int:
-                sql_types[key] = Integer
+                sql_types[key] = [Integer]
             elif py_type == "float" or py_type is float:
-                sql_types[key] = Float
+                sql_types[key] = [Float]
             elif py_type == "string" or py_type is str:
-                sql_types[key] = String
+                sql_types[key] = [String]
             elif py_type == "datetime" or py_type is datetime:
-                sql_types[key] = DateTime
+                sql_types[key] = [DateTime]
             elif py_type == "bool" or py_type is bool:
-                sql_types[key] = Boolean
+                sql_types[key] = [Boolean]
             elif py_type is None:
                 continue  # We continue here so as to not create a column for null values
                 # ToDo: evaluate if this clause should exist. Why was it here in the first place?
