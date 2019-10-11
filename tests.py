@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import os
 import pandas
 import pytest
-from sqlalchemy import Integer, Float, String, DateTime, UniqueConstraint, ForeignKeyConstraint
+from sqlalchemy import Integer, Float, String, DateTime, UniqueConstraint, ForeignKey
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
@@ -129,6 +129,7 @@ class TestDatabase:
         assert os.path.exists(database.path), "Database does not exist"
 
     def test_tbl_creation(self, database, sample_data_operator):
+        """Tests if a table is created after extracting columns from the sample_data_operator."""
         data = sample_data_operator
         columns = data.columns
         database.map_table("sample_tbl", columns)
@@ -136,27 +137,8 @@ class TestDatabase:
         database.clear_mappers()
         assert database.table_exists("sample_tbl")
 
-    def test_tbl_creation_constraints(self, database, session, sample_data_operator):
-        """Tests if a unique constraint is attached to unique table by inserting duplicate data."""
-        data = sample_data_operator
-        columns = data.columns
-        constraints = {UniqueConstraint: ["strings"]}
-        database.map_table("unique_tbl", columns, constraints)
-        database.create_tables()
-        assert database.table_exists('unique_tbl')
-
-        tbl_map = database.table_mappings["unique_tbl"]
-        session.add_all([tbl_map(**row) for row in data.rows])
-        session.commit()
-        non_unique_row = tbl_map(**{'strings': 'hi', 'ints': 1, 'floats': 1.1, 'dates': datetime.now()})
-        session.add(non_unique_row)
-        with pytest.raises(IntegrityError):
-            session.commit()
-
-    def test_foreign_key_constraints(self, database, session):
-        parent_data = DataOperator({})
-
     def test_tbl_insertion(self, database, session, sample_data_operator):
+        """Test if data is correctly inserted after extracting rows from the sample_data_operator."""
         data = sample_data_operator
         rows = data.rows
         tbl_map = database.table_mappings["sample_tbl"]
@@ -168,9 +150,55 @@ class TestDatabase:
         test_dict = {key: test_query.__getattribute__(key) for key in data.data.keys()}
         assert row_dict == test_dict
 
+    def test_tbl_creation_constraints(self, database, session, sample_data_operator):
+        """Test if a unique constraint is attached to unique table by inserting duplicate data."""
+        data = sample_data_operator
+        columns = data.columns
+        constraints = {UniqueConstraint: ["strings"]}
+        database.map_table("unique_tbl", columns, constraints)
+        database.create_tables()
+        database.clear_mappers()
+        assert database.table_exists('unique_tbl')
+
+        tbl_map = database.table_mappings["unique_tbl"]
+        session.add_all([tbl_map(**row) for row in data.rows])
+        session.commit()
+        non_unique_row = tbl_map(**{'strings': 'hi', 'ints': 1, 'floats': 1.1, 'dates': datetime.now()})
+        session.add(non_unique_row)
+        with pytest.raises(IntegrityError):
+            session.commit()
+
+    def test_foreign_key_constraints(self, database, session):
+        """Test if foreign key constraints work by inserting expected data then raising an error on invalid data."""
+        foreign_data = DataOperator({"fk_id": [1, 22]})
+        foreign_cols = foreign_data.columns
+        foreign_cols['fk_id'].append(ForeignKey('sample_tbl.id'))
+        database.map_table('foreign_tbl', foreign_cols)
+        database.create_tables()
+
+        foreign_tbl = database.table_mappings['foreign_tbl']
+        rows = foreign_data.rows
+        # inserts '1' which exists in sample_tbl.id. Should not raise an error
+        session.add(foreign_tbl(**rows[0]))
+        session.commit()
+        # inserts '22' which does not exists in sample_tbl.id. Should raise an error
+        session.add(foreign_tbl(**rows[1]))
+        with pytest.raises(IntegrityError):
+            session.commit()
+
     def test_drop_tbl(self, database):
-        database.drop_table(drop_tbl='sample_tbl')
-        assert not database.table_exists('sample_tbl')
+        """Perform various tests to see if tables are dropped or raise correct errors when we attempt to drop them.
+
+        Test1 - Ensure an error is raised when we attempt to drop sample_tbl. The error results from foreign keys.
+        Test2 - Ensure unique tbl, with no FK constraints, is dropped
+        """
+        # Test 1
+        with pytest.raises(IntegrityError):
+            database.drop_table(drop_tbl='sample_tbl')
+
+        # Test 2
+        database.drop_table('unique_tbl')
+        assert not database.table_exists('unique_tbl')
 
 
 if __name__ == "__main__":

@@ -53,6 +53,8 @@ class Database:
         self.engine = create_engine(self.location)
         self.metadata = MetaData(self.engine)
         self.Base = declarative_base()
+        # self.Base = automap_base()
+        # self.Base.prepare()
 
     @property
     def tables(self):
@@ -87,7 +89,11 @@ class Database:
     def map_table(self, tbl_name, column_types, constraints=None):
         """Map a table named tbl_name and with column_types to Template, add constraints if specified.
 
-        Note: Foreign key constraints should likely be added to the mapped table explicitly rather than in this function
+        Note: Foreign key constraints should likely be added to the mapped table explicitly rather than in this function.
+
+        A primary key named 'id' is automatically inserted as the first column of every table. This is a design decision
+        to simplify table creation as the use of other columns as primary keys will only be the correct decision in a
+        minority of circumstances.
 
         Args:
             tbl_name: The name of the table to be mapped
@@ -127,7 +133,9 @@ class Database:
         clear_mappers()
 
     def drop_table(self, drop_tbl):
-        """Drops the specified table from the database"""
+        """Drops the specified table from the database.
+
+        Note: If the database uses SQLite, tables with foreign key constraints cannot be dropped. """
         self.metadata.reflect(bind=self.engine)
         drop_tbls = self.metadata.tables[drop_tbl]
         drop_tbls.drop()
@@ -144,6 +152,47 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
 
 if __name__ == "__main__":
     import tempfile
+    from datetime import datetime, timedelta
+    from datatotable.data import DataOperator
+    from sqlalchemy import ForeignKey
+    from sqlalchemy.orm import Session, relationship
+
+    # Setup temporary file
     temp_dir = tempfile.TemporaryDirectory()
     db = Database(name="test", directory=temp_dir.name)
+    session = Session(db.engine)
+
+    # Setup test parent table
+    test_data = {"strings": ["hi", "world", "bye", "school"], "ints": [1, 2, 3, 4],
+                 "floats": [1.1, 2.2, 3.3, 4.4444], "dates": [datetime(2019, 1, 1) + timedelta(i) for i in range(4)]}
+    data = DataOperator(test_data)
+    columns = data.columns
+    db.map_table('parent', columns)
+    db.create_tables()
+    db.clear_mappers()
+    parent_tbl = db.table_mappings["parent"]
+    session.add_all([parent_tbl(**row) for row in data.rows])
+    session.commit()
+    del parent_tbl
+
+    # Setup child table
+    foreign_data = DataOperator({"parent_id": [1, 22]})
+    foreign_cols = foreign_data.columns
+    foreign_cols['parent_id'].append(ForeignKey('parent.id'))
+    db.map_table('child', foreign_cols)
+    db.Template.parent = relationship("parent", backref="children")
+    db.create_tables()
+
+    child_tbl = db.table_mappings["child"]
+    parent_tbl = db.table_mappings["parent"]
+    p = parent_tbl()
+    c = child_tbl()
+    print(p.child_collection)
+
+    p.child_collection.append(c)
+    # rows = foreign_data.rows
+    # session.add(child_tbl(**rows[0]))  # Will not raise an error
+    # session.commit()
+    # session.add(child_tbl(**rows[1]))  # Will raise an error
+    # session.commit()
     t1=2
