@@ -7,7 +7,7 @@ import os
 from sqlalchemy import Column, Integer, Table
 from sqlalchemy import create_engine, MetaData, event
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import mapper, clear_mappers
+from sqlalchemy.orm import backref, mapper, clear_mappers
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.automap import automap_base
 
@@ -173,26 +173,45 @@ if __name__ == "__main__":
     parent_tbl = db.table_mappings["parent"]
     session.add_all([parent_tbl(**row) for row in data.rows])
     session.commit()
-    del parent_tbl
+    del parent_tbl  # Delete b/c this object will not be aware of relationships added later
 
     # Setup child table
-    foreign_data = DataOperator({"parent_id": [1, 22]})
+    foreign_data = DataOperator({"parent_id": [1, 2]})
     foreign_cols = foreign_data.columns
-    foreign_cols['parent_id'].append(ForeignKey('parent.id'))
+    foreign_cols['parent_id'].append(ForeignKey('parent.id', ondelete="CASCADE"))
+    # constraint = CheckConstraint('parent_id Not Null', name="not_null")
+
     db.map_table('child', foreign_cols)
-    db.Template.parent = relationship("parent", backref="children")
+    db.Template.parent = relationship("parent", backref=backref("children", passive_deletes=True))
     db.create_tables()
 
+    # # Test if parent relationship cascades
+    # parent_tbl = db.table_mappings['parent']
+    # parent_tbl.children = relationship('child', cascade="all, delete", backref="parents")
+    # db.create_tables()
+
+    # Add data to child with a foreign key
     child_tbl = db.table_mappings["child"]
+    rows = foreign_data.rows
+    session.add(child_tbl(**rows[0]))
+    session.commit()
+    session.add(child_tbl(**rows[1]))
+    session.commit()
+
+    # Check cascade
+    parent_tbl = db.table_mappings["parent"]
+    c = session.query(child_tbl).first()
+    p1 = session.query(parent_tbl).filter(parent_tbl.id == 1).all()[0]
+    p2 = session.query(parent_tbl).filter(parent_tbl.id == 2).all()[0]
+    # p2.id = 99
+    # session.delete(p1)  # Delete parent.id = 1, should set child.parent_id to Null
+    #session.add(p2)  # raises error b/c foreign key constraint failed
+    session.commit()
+
+    # Check that relationships are established
     parent_tbl = db.table_mappings["parent"]
     p = parent_tbl()
     c = child_tbl()
     print(p.child_collection)
+    temp_dir.cleanup()
 
-    p.child_collection.append(c)
-    # rows = foreign_data.rows
-    # session.add(child_tbl(**rows[0]))  # Will not raise an error
-    # session.commit()
-    # session.add(child_tbl(**rows[1]))  # Will raise an error
-    # session.commit()
-    t1=2

@@ -186,20 +186,28 @@ class TestDatabase:
         with pytest.raises(IntegrityError):
             session.commit()
 
+    def test_cascades(self, database, session):
+        foreign_tbl = database.table_mappings['foreign_tbl']
+        sample_tbl = database.table_mappings['sample_tbl']
+
+        sample_row = session.query(sample_tbl).join(foreign_tbl).all()
+        assert len(sample_row) == 1
+        session.delete(sample_row[0])
+        session.commit()
+        sample_row = session.query(sample_tbl).join(foreign_tbl).all()
+        assert len(sample_row) == 0
+
     def test_drop_tbl(self, database):
         """Perform various tests to see if tables are dropped or raise correct errors when we attempt to drop them.
 
         Test1 - Ensure an error is raised when we attempt to drop sample_tbl. The error results from foreign keys.
         Test2 - Ensure unique tbl, with no FK constraints, is dropped
         """
-        # Test 1
-        with pytest.raises(IntegrityError):
-            database.drop_table(drop_tbl='sample_tbl')
+        # Test 1 
+        # with pytest.raises(IntegrityError):
+        #    database.drop_table(drop_tbl='sample_tbl')
 
         # Test 2
         database.drop_table('unique_tbl')
         assert not database.table_exists('unique_tbl')
 
-
-if __name__ == "__main__":
-    print('ello')
