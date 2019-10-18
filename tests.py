@@ -187,6 +187,7 @@ class TestDatabase:
             session.commit()
 
     def test_cascades(self, database, session):
+        """Ensure cascade between sample_tbl and foreign_tbl by checking rows in foreign tbl pre and post delete."""
         foreign_tbl = database.table_mappings['foreign_tbl']
         sample_tbl = database.table_mappings['sample_tbl']
 
@@ -194,8 +195,8 @@ class TestDatabase:
         assert len(sample_row) == 1
         session.delete(sample_row[0])
         session.commit()
-        sample_row = session.query(sample_tbl).join(foreign_tbl).all()
-        assert len(sample_row) == 0
+        foreign_row_count = session.query(foreign_tbl).count()
+        assert foreign_row_count == 1
 
     def test_drop_tbl(self, database):
         """Perform various tests to see if tables are dropped or raise correct errors when we attempt to drop them.
@@ -203,7 +204,7 @@ class TestDatabase:
         Test1 - Ensure an error is raised when we attempt to drop sample_tbl. The error results from foreign keys.
         Test2 - Ensure unique tbl, with no FK constraints, is dropped
         """
-        # Test 1 
+        # Test 1
         # with pytest.raises(IntegrityError):
         #    database.drop_table(drop_tbl='sample_tbl')
 

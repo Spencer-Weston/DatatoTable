@@ -116,16 +116,29 @@ class Database:
 
     @staticmethod
     def _generate_columns(columns):
-        """Take columns where key is the column name and value is the column type into SQLlachemy columns.
+        """Take columns where key is the column name and value is the column type into SQLalchemy columns.
 
         To use additional arguments, such as constraints, specify column values as a list where the constraints are
         elements of the list"""
         column_list = []
-        for key, value in columns.items():
+        for col_name, args in columns.items():
             try:
-                column_list.append(Column(key, *value))  # Unpacks additional column arguments
+                kwargs = []
+                for idx in range(len(args)):
+                    if type(args[idx]) is dict:
+                        kwargs.append(args[idx])
+                        args.pop(idx)
+                col = Column(col_name, *args)
+                for kwarg in kwargs:
+                    keys = [*kwarg]
+                    if len(keys) > 1:
+                        raise Exception('Expected 1 key, {} were given'.format(len(keys)))
+                    else:
+                        key = keys[0]
+                    col.__setattr__(key, kwarg[key])
+                column_list.append(col)  # Unpacks additional column arguments
             except TypeError:  # if no additional arguments, just make a standard name and type column
-                column_list.append(Column(key, value))
+                column_list.append(Column(col_name, args))
         return column_list
 
     @staticmethod
@@ -179,7 +192,7 @@ if __name__ == "__main__":
     foreign_data = DataOperator({"parent_id": [1, 2]})
     foreign_cols = foreign_data.columns
     foreign_cols['parent_id'].append(ForeignKey('parent.id', ondelete="CASCADE"))
-    # constraint = CheckConstraint('parent_id Not Null', name="not_null")
+    foreign_cols['parent_id'].append({"nullable": False})
 
     db.map_table('child', foreign_cols)
     db.Template.parent = relationship("parent", backref=backref("children", passive_deletes=True))
