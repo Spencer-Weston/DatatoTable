@@ -11,7 +11,7 @@ setup(
     long_description=long_description,
     author="Spencer Weston",
     author_email="Spencerweston3214@gmail.com",
-    url="https://github.com/Spencer-Weston/NBApredict",
+    url="https://github.com/Spencer-Weston/DatatoTable",
     packages=['datatotable'],
     install_requires=[],  # What all do we need here?
 )

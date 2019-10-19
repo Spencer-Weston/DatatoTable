@@ -193,15 +193,10 @@ if __name__ == "__main__":
     foreign_cols = foreign_data.columns
     foreign_cols['parent_id'].append(ForeignKey('parent.id', ondelete="CASCADE"))
     foreign_cols['parent_id'].append({"nullable": False})
-
     db.map_table('child', foreign_cols)
     db.Template.parent = relationship("parent", backref=backref("children", passive_deletes=True))
     db.create_tables()
 
-    # # Test if parent relationship cascades
-    # parent_tbl = db.table_mappings['parent']
-    # parent_tbl.children = relationship('child', cascade="all, delete", backref="parents")
-    # db.create_tables()
 
     # Add data to child with a foreign key
     child_tbl = db.table_mappings["child"]
@@ -215,10 +210,7 @@ if __name__ == "__main__":
     parent_tbl = db.table_mappings["parent"]
     c = session.query(child_tbl).first()
     p1 = session.query(parent_tbl).filter(parent_tbl.id == 1).all()[0]
-    p2 = session.query(parent_tbl).filter(parent_tbl.id == 2).all()[0]
-    # p2.id = 99
-    # session.delete(p1)  # Delete parent.id = 1, should set child.parent_id to Null
-    #session.add(p2)  # raises error b/c foreign key constraint failed
+    session.delete(p1)
     session.commit()
 
     # Check that relationships are established
