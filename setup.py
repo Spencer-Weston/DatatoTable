@@ -4,8 +4,8 @@ with open("README.md", 'r') as f:
     long_description = f.read()
 
 setup(
-    name="datatotable",
-    version="0.1",
+    name="DataToTable",
+    version="0.2",
     description="Create SQLite database tables automatically from data",
     license="MIT",
     long_description=long_description,
