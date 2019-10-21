@@ -208,16 +208,9 @@ class TestDatabase:
         assert child_row_count == 1
 
     def test_drop_tbl(self, database):
-        """Perform various tests to see if tables are dropped or raise correct errors when we attempt to drop them.
-
-        Test1 - Ensure an error is raised when we attempt to drop sample_tbl. The error results from foreign keys.
-        Test2 - Ensure unique tbl, with no FK constraints, is dropped
+        """Test if tables are dropped correctly.
         """
-        # Test 1
-        # with pytest.raises(IntegrityError):
-        #    database.drop_table(drop_tbl='sample_tbl')
 
-        # Test 2
         database.drop_table('unique_tbl')
         assert not database.table_exists('unique_tbl')
 
