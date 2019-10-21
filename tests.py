@@ -3,7 +3,6 @@ from datatotable.data import DataOperator
 from datatotable import typecheck
 from datetime import datetime, timedelta
 import os
-import pandas
 import pytest
 from sqlalchemy import Integer, Float, String, DateTime, UniqueConstraint, ForeignKey
 from sqlalchemy.orm import Session
@@ -168,35 +167,45 @@ class TestDatabase:
         with pytest.raises(IntegrityError):
             session.commit()
 
-    def test_foreign_key_constraints(self, database, session):
+    def test_foreign_key_constraints(self, database, session, sample_data_operator):
         """Test if foreign key constraints work by inserting expected data then raising an error on invalid data."""
-        foreign_data = DataOperator({"fk_id": [1, 22]})
-        foreign_cols = foreign_data.columns
-        foreign_cols['fk_id'].append(ForeignKey('sample_tbl.id'))
-        database.map_table('foreign_tbl', foreign_cols)
+        parent_cols = sample_data_operator.columns
+        database.map_table("parent_tbl", parent_cols)
         database.create_tables()
+        database.clear_mappers()
+        parent_tbl = database.table_mappings["parent_tbl"]
+        parent_rows = sample_data_operator.rows
+        session.add_all([parent_tbl(**row) for row in parent_rows])
+        session.commit()
 
-        foreign_tbl = database.table_mappings['foreign_tbl']
-        rows = foreign_data.rows
+        child_data = DataOperator({"fk_id": [1, 22]})
+        child_cols = child_data.columns
+        child_cols['fk_id'].append(ForeignKey('parent_tbl.id'))
+        database.map_table('child_tbl', child_cols)
+        database.create_tables()
+        database.clear_mappers()
+
+        child_tbl = database.table_mappings['child_tbl']
+        rows = child_data.rows
         # inserts '1' which exists in sample_tbl.id. Should not raise an error
-        session.add(foreign_tbl(**rows[0]))
+        session.add(child_tbl(**rows[0]))
         session.commit()
         # inserts '22' which does not exists in sample_tbl.id. Should raise an error
-        session.add(foreign_tbl(**rows[1]))
+        session.add(child_tbl(**rows[1]))
         with pytest.raises(IntegrityError):
             session.commit()
 
     def test_cascades(self, database, session):
-        """Ensure cascade between sample_tbl and foreign_tbl by checking rows in foreign tbl pre and post delete."""
-        foreign_tbl = database.table_mappings['foreign_tbl']
-        sample_tbl = database.table_mappings['sample_tbl']
+        """Ensure cascade between parent_tbl and child_tbl by checking rows in foreign tbl pre and post delete."""
+        child_tbl = database.table_mappings['child_tbl']
+        parent_tbl = database.table_mappings['parent_tbl']
 
-        sample_row = session.query(sample_tbl).join(foreign_tbl).all()
-        assert len(sample_row) == 1
-        session.delete(sample_row[0])
+        parent_row = session.query(parent_tbl).join(child_tbl).all()
+        assert len(parent_row) == 1
+        session.delete(parent_row[0])
         session.commit()
-        foreign_row_count = session.query(foreign_tbl).count()
-        assert foreign_row_count == 1
+        child_row_count = session.query(child_tbl).count()
+        assert child_row_count == 1
 
     def test_drop_tbl(self, database):
         """Perform various tests to see if tables are dropped or raise correct errors when we attempt to drop them.
