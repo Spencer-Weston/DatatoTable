@@ -208,9 +208,7 @@ class TestDatabase:
         assert child_row_count == 1
 
     def test_drop_tbl(self, database):
-        """Test if tables are dropped correctly.
-        """
-
+        """Test if tables are dropped correctly."""
         database.drop_table('unique_tbl')
         assert not database.table_exists('unique_tbl')
 
