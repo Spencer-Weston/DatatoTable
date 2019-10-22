@@ -4,21 +4,21 @@ Datatotable converts data into SQLites tables automatically. The package is most
 ## Quick Start
 We first create a Database object which takes a name and location as input. The Database creates an engine we can pass to sqlalchemy.orm.Session to interact with the database. We'll use a temporary directory for this example.
 ```python
-import datatotable
+from datatotable import database
 import tempfile
 from sqlalchemy.orm import Session
 temp_dir = tempfile.TemporaryDirectory()
-db = Database(name="sample", directory=temp_dir.name)
+db = database.Database(name="sample", directory=temp_dir.name)
 session = Session(db.engine)
 ```
 
 Next, we create a DataOperator object with the data we want to store. The DataOperator's column property reads the data and returns a dictionary with column names as keys and lists of column attributes as values. 
 ```python
 raw_data = {"col1": [1,2,3,4], "col2": ["hello", "world", "from", "computer"], "col3": [10.1, 13.5, 23.2, 98.4]}
-data = datatotable.DataOperator(raw_data)
+data = datatotable.data.DataOperator(raw_data)
 columns = data.columns
 print(columns)
-{"col1": [Integer], "col2": [String], "col3": [Float]}
+{'col1': [<class 'sqlalchemy.sql.sqltypes.Integer'>], 'col2': [<class 'sqlalchemy.sql.sqltypes.String'>], 'col3': [<class 'sqlalchemy.sql.sqltypes.Float'>]}
 ```
 
 When passed to the Database.map_table() function, these columns are mapped to an empty object. After the table is mapped, call the create_tables() function to create the table in the database.
