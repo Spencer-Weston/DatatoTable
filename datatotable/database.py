@@ -7,12 +7,9 @@ import os
 from sqlalchemy import Column, Integer, Table
 from sqlalchemy import create_engine, MetaData, event
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import backref, mapper, clear_mappers
+from sqlalchemy.orm import mapper, clear_mappers
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.automap import automap_base
-
-# Local Imports
-from datatotable import data
 
 
 class Database:
@@ -161,62 +158,3 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA foreign_keys=ON")
     cursor.close()
-
-
-if __name__ == "__main__":
-    import tempfile
-    from datetime import datetime, timedelta
-    from datatotable.data import DataOperator
-    from sqlalchemy import ForeignKey
-    from sqlalchemy.orm import Session, relationship
-
-    # Setup temporary file
-    temp_dir = tempfile.TemporaryDirectory()
-    db = Database(name="test", directory=temp_dir.name)
-    session = Session(db.engine)
-
-    # Setup test parent table
-    test_data = {"strings": ["hi", "world", "bye", "school"], "ints": [1, 2, 3, 4],
-                 "floats": [1.1, 2.2, 3.3, 4.4444], "dates": [datetime(2019, 1, 1) + timedelta(i) for i in range(4)]}
-    data = DataOperator(test_data)
-    columns = data.columns
-    db.map_table('parent', columns)
-    db.create_tables()
-    db.clear_mappers()
-    parent_tbl = db.table_mappings["parent"]
-    session.add_all([parent_tbl(**row) for row in data.rows])
-    session.commit()
-    del parent_tbl  # Delete b/c this object will not be aware of relationships added later
-
-    # Setup child table
-    foreign_data = DataOperator({"parent_id": [1, 2]})
-    foreign_cols = foreign_data.columns
-    foreign_cols['parent_id'].append(ForeignKey('parent.id', ondelete="CASCADE"))
-    foreign_cols['parent_id'].append({"nullable": False})
-    db.map_table('child', foreign_cols)
-    db.Template.parent = relationship("parent", backref=backref("children", passive_deletes=True))
-    db.create_tables()
-
-
-    # Add data to child with a foreign key
-    child_tbl = db.table_mappings["child"]
-    rows = foreign_data.rows
-    session.add(child_tbl(**rows[0]))
-    session.commit()
-    session.add(child_tbl(**rows[1]))
-    session.commit()
-
-    # Check cascade
-    parent_tbl = db.table_mappings["parent"]
-    c = session.query(child_tbl).first()
-    p1 = session.query(parent_tbl).filter(parent_tbl.id == 1).all()[0]
-    session.delete(p1)
-    session.commit()
-
-    # Check that relationships are established
-    parent_tbl = db.table_mappings["parent"]
-    p = parent_tbl()
-    c = child_tbl()
-    print(p.child_collection)
-    temp_dir.cleanup()
-
