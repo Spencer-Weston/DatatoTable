@@ -45,3 +45,22 @@ Now, check if the data is in the database.
 print(session.query(example_tbl).count())
 >>> 4
 ```
+
+## Version 0.3
+This version is the first valid version uploaded to PyPi. It provides access to a database, automatically creates tables, and coerces data into a format that can be inserted into a table. It passes all tests in the test suite. However, bugs may appear in use cases undefined by the test case. 
+
+## Future Development
+### Documentation
+1. Use Sphinx to create API documentation on Read the Docs
+2. A thorough tutorial to explain how constraints and relationships are established
+### Functionality
+1. Add functionality to relate SQLalchemy ORM objects when tables are created with foreign keys. This is a manual process currently.
+2. Allow simultaneous creation of multiple tables. Tables must be created one by one currently. 
+
+## Author
+Spencer Weston
+
+spencerweston3214@gmail.com
+
+## License
+MIT
