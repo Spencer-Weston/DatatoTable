@@ -5,7 +5,7 @@ with open("README.md", 'r') as f:
 
 setup(
     name="datatotable",
-    version="0.3",
+    version="0.3.1",
     description="Create SQLite database tables automatically from data",
     license="MIT",
     classifiers=['License :: OSI Approved :: MIT License'],
