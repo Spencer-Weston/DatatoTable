@@ -47,7 +47,7 @@ print(session.query(example_tbl).count())
 ```
 
 ## Version 0.3
-This version is the first valid version uploaded to PyPi. It provides access to a database, automatically creates tables, and coerces data into a format that can be inserted into a table. It passes all tests in the test suite. However, bugs may appear in use cases undefined by the test case. 
+This version is the first valid version uploaded to PyPi. It provides access to a database, automatically creates tables, and coerces data into a format that can be inserted into a table. It passes all tests in the test suite, but the test suite will need to be fleshed out as users come across problems not anticipated currently. 
 
 ## Future Development
 ### Documentation
