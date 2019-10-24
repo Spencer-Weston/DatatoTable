@@ -2,7 +2,7 @@
 Datatotable converts data into SQLites tables automatically. The package is most useful when the name and number of columns in a table  are large or unknown ahead of time as SQLalchemy's Object Relational mapper (ORM) requires manual generation of tables and their columns. Datatotable automates this process. Yet, it still allows manual additions of constraints, foreign keys, and other properties as desired. 
 
 ## Quick Start
-This example shows a minimal use case for datatotable. Datatotable functions through two classes Database, which provides access to the database, and DataOperator, which interprets data for use with SQLalchemy. First, import these classes. Next, import a SQLalchemy Session class for inserts and tempfile to create a temporary directory.
+The minimal use case of datatotable creates a table from a data source, and then inserts the data. This example walks through this process. Datatotable functions through two classes Database, which provides access to the database, and DataOperator, which interprets data for use with SQLalchemy. First, import these classes. Next, import a SQLalchemy Session class for inserts and tempfile to create a temporary directory.
 
 ```python
 from datatotable.database import Database
