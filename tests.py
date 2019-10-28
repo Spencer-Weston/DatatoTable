@@ -153,7 +153,7 @@ class TestDatabase:
         """Test if a unique constraint is attached to unique table by inserting duplicate data."""
         data = sample_data_operator
         columns = data.columns
-        constraints = {UniqueConstraint: ["strings"]}
+        constraints = [UniqueConstraint('strings')]
         database.map_table("unique_tbl", columns, constraints)
         database.create_tables()
         database.clear_mappers()

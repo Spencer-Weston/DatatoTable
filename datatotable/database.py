@@ -102,7 +102,7 @@ class Database:
         if constraints:
             t = Table(tbl_name, self.metadata, Column('id', Integer, primary_key=True),
                       *columns,
-                      *(constraint(*columns) for constraint, columns in constraints.items()),
+                      *constraints,
                       )
         else:
             t = Table(tbl_name, self.metadata, Column('id', Integer, primary_key=True),
