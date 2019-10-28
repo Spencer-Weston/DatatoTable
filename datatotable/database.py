@@ -83,7 +83,7 @@ class Database:
         create_tables() is called. """
         self.metadata.create_all(self.engine)
 
-    def map_table(self, tbl_name, column_types, constraints=None):
+    def map_table(self, tbl_name, columns, constraints=None):
         """Map a table named tbl_name and with column_types to Template, add constraints if specified.
 
         Note: Foreign key constraints should likely be added to the mapped table explicitly rather than in this function.
@@ -94,11 +94,11 @@ class Database:
 
         Args:
             tbl_name: The name of the table to be mapped
-            column_types: A dictionary with column names as keys and sql types as values
+            columns: A dictionary with column names as keys and sql types as values
             constraints: A dictionary of desired constraints where the constraints (Such as UniqueConstraint) are keys
             and the columns to be constrained is a list of string column names
         """
-        columns = self._generate_columns(column_types)
+        columns = self._generate_columns(columns)
         if constraints:
             t = Table(tbl_name, self.metadata, Column('id', Integer, primary_key=True),
                       *columns,
