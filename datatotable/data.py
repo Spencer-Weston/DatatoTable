@@ -13,15 +13,16 @@ class DataOperator:
         """Stores the data dictionary passed to it
 
         Args:
-            data: A dictionary of data which will, usually, reflect data scraped from a website. Two dictionary
-            formats are accepted. First, data may hold column names with data values formatted as:
-            data[col1] = [val1, val2, ...]
-            data[col2] = [val1, val2, ...]
+            data: A dictionary of data which will, usually, reflect data scraped from a website. Two data
+            formats are accepted. First, data may be a dictionary with column names as keys with data values
+            formatted as:
+            data[col1] = [val1, val2, ..., valx]
+            data[col2] = [val1, val2, ..., valx]
             Second, data may be a list of rows formatted as:
             data[0] = {col1: val0, col2: val0, colx: val0}
             data[x] = {col1: valx, col2: valx, colx: valx}
         """
-        self.data = data
+        self.data = self._format_data(data)
 
     @property
     def columns(self):
@@ -34,6 +35,22 @@ class DataOperator:
         py_types = self._get_py_type()  # py_types is a dict
         sql_types = self._py_type_to_sql_type(py_types)
         return sql_types
+
+    @staticmethod
+    def _format_data(data):
+        if isinstance(data, dict):
+            return data
+        elif isinstance(data, list):
+            keys = data[0].keys()
+            dict_data = {key: [] for key in keys}
+            for i in data:
+                if i.keys() == keys:
+                    for key in keys:
+                        dict_data[key].append(i[key])
+            return dict_data
+        else:
+            raise ValueError("Input data is of {} type. DataOperator only supports lists or dictionaries".
+                             format(type(data)))
 
     def _get_py_type(self):
         """Take the classes data values and return a dictionary that holds the python type for the values.
