@@ -38,6 +38,7 @@ class DataOperator:
 
     @staticmethod
     def _format_data(data):
+        """Format data into a dictionary where keys are column names and values are ordered lists of values."""
         if isinstance(data, dict):
             return data
         elif isinstance(data, list):
@@ -165,6 +166,21 @@ class DataOperator:
             return True
         else:
             return False
+
+    def num_rows(self):
+        """Return the length of the longest column in self.data"""
+        keys = self.data.keys()
+        lengths = []
+        for key in keys:
+            lengths.append(len(self.data[key]))
+        return max(lengths)
+
+    def fill(self, key, value):
+        column_length = len(self.data[key])
+        data_length = self.num_rows()
+        for i in range(column_length, data_length):
+            self.data[key].append(value)
+
 
 
 if __name__ == "__main__":
