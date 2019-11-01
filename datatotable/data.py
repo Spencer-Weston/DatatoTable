@@ -1,9 +1,10 @@
 """
 Data holds the DataOperator class which coerces raw_data into SQLalchemy compatible formats.
 """
-from sqlalchemy import Integer, Float, String, DateTime, Boolean
+from sqlalchemy import Integer, Float, String, DateTime, Boolean, Date
 from datatotable import typecheck
-from datetime import datetime
+from datetime import datetime, date
+import pandas
 
 
 class DataOperator:
@@ -93,6 +94,8 @@ class DataOperator:
                 sql_types[key] = [String]
             elif py_type == "datetime" or py_type is datetime:
                 sql_types[key] = [DateTime]
+            elif py_type == "date" or py_type is date:
+                sql_types[key] = [Date]
             elif py_type == "bool" or py_type is bool:
                 sql_types[key] = [Boolean]
             elif py_type is None:
@@ -150,6 +153,13 @@ class DataOperator:
                 return False
         return True
 
+    @property
+    def dataframe(self):
+        try:
+            return pandas.DataFrame(self.data)
+        except ValueError:
+            raise ValueError('Arrays must all be the same length. Should columns be filled with DataOperator.fill()?')
+
     def validate_data_length(self):
         """Given a dictionary where keys references lists, check that all lists are the same length, and return T or F
 
@@ -180,7 +190,6 @@ class DataOperator:
         data_length = self.num_rows()
         for i in range(column_length, data_length):
             self.data[key].append(value)
-
 
 
 if __name__ == "__main__":
