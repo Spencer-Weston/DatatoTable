@@ -2,7 +2,7 @@
 Contains type checks and type conversion functions
 """
 
-from datetime import datetime
+from datetime import datetime, date
 from enum import Enum
 
 
@@ -101,6 +101,8 @@ def _get_type(val):
         return float
     elif isinstance(val, datetime):
         return datetime
+    elif isinstance(val, date):
+        return date
     elif isinstance(val, str):
         return str
     elif isinstance(val, bool):
