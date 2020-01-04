@@ -182,7 +182,8 @@ class DataOperator:
         keys = self.data.keys()
         lengths = []
         for key in keys:
-            lengths.append(len(self.data[key]))
+            if self.data[key]:
+                lengths.append(len(self.data[key]))
         return max(lengths)
 
     def fill(self, key, value):
