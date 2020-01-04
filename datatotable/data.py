@@ -186,7 +186,13 @@ class DataOperator:
         return max(lengths)
 
     def fill(self, key, value):
-        column_length = len(self.data[key])
+        """Fill a column, specified by key, with the specified value.
+
+        Typically used to match data length to coerce a shorter column to the length of the data set as a whole."""
+        if self.data[key]:
+            column_length = len(self.data[key])
+        else:
+            column_length = 0
         data_length = self.num_rows()
         for i in range(column_length, data_length):
             self.data[key].append(value)
