@@ -1,3 +1,4 @@
+import datatotable.convert as convert
 from datatotable.database import Database
 from datatotable.data import DataOperator
 from datatotable import typecheck
@@ -194,6 +195,16 @@ class TestDatabase:
         session.add(child_tbl(**rows[1]))
         with pytest.raises(IntegrityError):
             session.commit()
+
+    def test_values_to_foreign_keys(self, session, sample_dict_data, database):
+        foreign_tbl = database.table_mappings['parent_tbl']
+        foreign_key = 'strings'
+        foreign_value = 'ints'
+        child_data = [1, 2, 3, 4]
+        converted_data = convert.values_to_foreign_key(session, foreign_tbl, foreign_key, foreign_value, child_data)
+        assert sample_dict_data['strings'] == converted_data
+
+    def test_values_to_foreign_keys_multikey
 
     def test_cascades(self, database, session):
         """Ensure cascade between parent_tbl and child_tbl by checking rows in foreign tbl pre and post delete."""
