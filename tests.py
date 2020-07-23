@@ -33,11 +33,6 @@ def sample_data_operator(sample_dict_data):
 
 
 @pytest.fixture()
-def sample_foreign_data_operator():
-    pass
-
-
-@pytest.fixture()
 def session(database):
     session = Session(bind=database.engine)
     return session
@@ -204,7 +199,13 @@ class TestDatabase:
         converted_data = convert.values_to_foreign_key(session, foreign_tbl, foreign_key, foreign_value, child_data)
         assert sample_dict_data['strings'] == converted_data
 
-    def test_values_to_foreign_keys_multikey
+    def test_values_to_foreign_keys_multikey(self, session, sample_dict_data, database):
+        foreign_tbl = database.table_mappings['parent_tbl']
+        foreign_key = 'floats'
+        foreign_vals = ['strings', 'ints']
+        child_data = {k: sample_dict_data[k] for k in foreign_vals}
+        converted_data = convert.values_to_foreign_key(session, foreign_tbl, foreign_key, foreign_vals, child_data)
+        assert sample_dict_data['floats'] == converted_data
 
     def test_cascades(self, database, session):
         """Ensure cascade between parent_tbl and child_tbl by checking rows in foreign tbl pre and post delete."""
