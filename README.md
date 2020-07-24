@@ -28,7 +28,7 @@ print(columns)
 
 Pass the columns to Database's map_table() function to create a mapped SQLalchemy Base class. After the table is mapped, call the create_tables() function to create the table in the database.
 ```python
-db.map_table(tbl_name="example_tbl", column_types=columns)
+db.map_table(tbl_name="example_tbl", columns=columns)
 db.create_tables()
 ```
 
@@ -45,6 +45,7 @@ Now, check if the data is in the database.
 print(session.query(example_tbl).count())
 >>> 4
 ```
+The package also includes tools to convert data into foreign key values. 
 
 ## Version 0.3
 This version is the first valid version uploaded to PyPi. It provides access to a database, automatically creates tables, and coerces data into a format that can be inserted into a table. It passes all tests in the test suite, but the test suite will need to be fleshed out as users come across problems not anticipated currently. 
